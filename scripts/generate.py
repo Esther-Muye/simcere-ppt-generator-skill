@@ -169,6 +169,12 @@ def set_text_frame_text(shape, text, font_name=None, font_size=None, bold=None, 
                 run.font.color.rgb = color
 
 
+def remove_shape(shape):
+    """从 slide 中彻底删除一个 shape（包括占位符）"""
+    sp = shape.element
+    sp.getparent().remove(sp)
+
+
 def add_bullet_points(shape, items, font_name='微软雅黑', font_size=14):
     """向文本框添加项目符号列表"""
     if not shape.has_text_frame:
@@ -530,12 +536,12 @@ def build_gantt_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 清空BODY占位符
+    # 删除BODY占位符
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                set_text_frame_text(shape, '')
+                remove_shape(shape)
 
     # 布局计算
     margin_left = Inches(0.6)
@@ -693,12 +699,12 @@ def build_timeline_horizontal_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 清空BODY占位符
+    # 删除BODY占位符
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                set_text_frame_text(shape, '')
+                remove_shape(shape)
 
     # 顶部逻辑主线说明
     if subtitle_text:
@@ -825,12 +831,12 @@ def build_big_number_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 清空BODY占位符
+    # 删除BODY占位符
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                set_text_frame_text(shape, '')
+                remove_shape(shape)
 
     # 大数字区域（左侧）
     big_num_left = Inches(0.6)
@@ -988,12 +994,12 @@ def build_comparison_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 清空BODY占位符
+    # 删除BODY占位符
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                set_text_frame_text(shape, '')
+                remove_shape(shape)
 
     # 引言
     if intro:
@@ -1121,12 +1127,12 @@ def build_item_matrix_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
 
-    # 清空BODY占位符
+    # 删除BODY占位符
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                set_text_frame_text(shape, '')
+                remove_shape(shape)
 
     if not groups:
         return
@@ -1347,12 +1353,12 @@ def build_calendar_grid_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
 
-    # 清空BODY占位符
+    # 删除BODY占位符
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                set_text_frame_text(shape, '')
+                remove_shape(shape)
 
     if not rows or not months:
         return
@@ -1533,12 +1539,12 @@ def build_process_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 清空BODY占位符
+    # 删除BODY占位符
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                set_text_frame_text(shape, '')
+                remove_shape(shape)
 
     if not steps:
         return
@@ -1619,12 +1625,12 @@ def build_kpi_dashboard_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 清空BODY占位符
+    # 删除BODY占位符
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                set_text_frame_text(shape, '')
+                remove_shape(shape)
 
     if not kpis:
         return
@@ -1782,14 +1788,18 @@ def build_slide(prs, slide_spec):
                     area = shape.width.emu * shape.height.emu
                     body_placeholders.append((area, shape))
         
-        if body_placeholders:
-            # 按面积从大到小排序，最大的用于副标题
-            body_placeholders.sort(key=lambda x: x[0], reverse=True)
-            # 填最大的
-            set_text_frame_text(body_placeholders[0][1], subtitle, font_size=16)
-            # 清除其余小的BODY占位符（避免残留模板文字或压缩显示）
-            for _, shape in body_placeholders[1:]:
-                set_text_frame_text(shape, '')
+        # 删除所有 BODY 占位符
+        for _, shape in body_placeholders:
+            remove_shape(shape)
+        # 如果有副标题，在标题下方新建文本框
+        if subtitle:
+            txBox = slide.shapes.add_textbox(Inches(0.7), Inches(1.5), Inches(11.5), Inches(0.5))
+            tf = txBox.text_frame
+            p = tf.paragraphs[0]
+            p.text = subtitle
+            p.font.size = Pt(16)
+            p.font.name = '微软雅黑'
+            p.font.color.rgb = SIMCERE_COLORS['dk1']
     
     # === 标题和内容 ===
     elif slide_type == 'content':
@@ -1810,15 +1820,18 @@ def build_slide(prs, slide_spec):
                 if 'TITLE' in ph_type:
                     set_text_frame_text(shape, title, font_size=28, bold=True)
 
-        # 副标题处理：用第一个 BODY 占位符，其余全部清空
-        if subtitle and body_placeholders:
-            set_text_frame_text(body_placeholders[0], subtitle, font_size=14)
-            for s in body_placeholders[1:]:
-                set_text_frame_text(s, '')
-        else:
-            # 没有副标题：清空所有 BODY 占位符（避免"此处可填入小标题"残留）
-            for s in body_placeholders:
-                set_text_frame_text(s, '')
+        # 删除所有 BODY 占位符（避免模板残留或占位）
+        for s in body_placeholders:
+            remove_shape(s)
+        # 如果有副标题，在标题下方新建文本框
+        if subtitle:
+            txBox = slide.shapes.add_textbox(Inches(0.7), Inches(1.1), Inches(11.5), Inches(0.4))
+            tf = txBox.text_frame
+            p = tf.paragraphs[0]
+            p.text = subtitle
+            p.font.size = Pt(14)
+            p.font.name = '微软雅黑'
+            p.font.color.rgb = SIMCERE_COLORS['dk1']
 
         # 正文区域：模板"标题和内容"版式中 BODY 占位符是窄条小标题区(y=0.34,h=0.40)，
         # 真正的正文区是 none 形状背景(y=1.43,h=5.28)但没有 txBody。
