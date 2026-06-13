@@ -536,12 +536,15 @@ def build_gantt_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符
+    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
+    shapes_to_remove = []
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                remove_shape(shape)
+                shapes_to_remove.append(shape)
+    for shape in shapes_to_remove:
+        remove_shape(shape)
 
     # 布局计算
     margin_left = Inches(0.6)
@@ -699,12 +702,15 @@ def build_timeline_horizontal_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符
+    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
+    shapes_to_remove = []
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                remove_shape(shape)
+                shapes_to_remove.append(shape)
+    for shape in shapes_to_remove:
+        remove_shape(shape)
 
     # 顶部逻辑主线说明
     if subtitle_text:
@@ -831,12 +837,15 @@ def build_big_number_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符
+    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
+    shapes_to_remove = []
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                remove_shape(shape)
+                shapes_to_remove.append(shape)
+    for shape in shapes_to_remove:
+        remove_shape(shape)
 
     # 大数字区域（左侧）
     big_num_left = Inches(0.6)
@@ -994,12 +1003,15 @@ def build_comparison_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符
+    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
+    shapes_to_remove = []
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                remove_shape(shape)
+                shapes_to_remove.append(shape)
+    for shape in shapes_to_remove:
+        remove_shape(shape)
 
     # 引言
     if intro:
@@ -1127,12 +1139,15 @@ def build_item_matrix_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
 
-    # 删除BODY占位符
+    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
+    shapes_to_remove = []
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                remove_shape(shape)
+                shapes_to_remove.append(shape)
+    for shape in shapes_to_remove:
+        remove_shape(shape)
 
     if not groups:
         return
@@ -1353,12 +1368,15 @@ def build_calendar_grid_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
 
-    # 删除BODY占位符
+    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
+    shapes_to_remove = []
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                remove_shape(shape)
+                shapes_to_remove.append(shape)
+    for shape in shapes_to_remove:
+        remove_shape(shape)
 
     if not rows or not months:
         return
@@ -2052,12 +2070,15 @@ def build_process_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符
+    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
+    shapes_to_remove = []
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                remove_shape(shape)
+                shapes_to_remove.append(shape)
+    for shape in shapes_to_remove:
+        remove_shape(shape)
 
     if not steps:
         return
@@ -2138,12 +2159,15 @@ def build_kpi_dashboard_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符
+    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
+    shapes_to_remove = []
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
             if 'BODY' in ph_type:
-                remove_shape(shape)
+                shapes_to_remove.append(shape)
+    for shape in shapes_to_remove:
+        remove_shape(shape)
 
     if not kpis:
         return
