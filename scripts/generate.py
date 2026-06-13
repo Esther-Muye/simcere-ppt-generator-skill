@@ -438,7 +438,7 @@ def add_shape_rect(slide, left, top, width, height, fill_color=None, line_color=
     
     if line_color:
         shape.line.color.rgb = line_color
-        shape.line.width = Pt(line_width or 1)
+        shape.line.width = line_width if line_width else Pt(1)
     else:
         shape.line.fill.background()
     
@@ -1517,6 +1517,519 @@ def _add_left_text(slide, left, top, width, height, text, font_size=11, color=No
 
 
 # ============================================================
+# 新增：review_matrix — 复盘矩阵（有效动作 × 做的好/做的不好）
+# 参考：科唯可-汇报任董0528（第3页核心复盘表）
+# ============================================================
+def build_review_matrix_slide(prs, slide, slide_spec):
+    """构建复盘矩阵页面
+
+    典型场景：基于关键动作维度，分"做的好"和"做得不好"两列，
+    逐行复盘每个维度的实践情况。
+
+    参数:
+        title: 页面标题
+        badge: 页面角标（如"复盘"，可选）
+        category_header: 分类维度标签（如"有效动作"、"关键动作"）
+        good_header: "做的好"列标题
+        bad_header: "做得不好"列标题（或"优化提升"）
+        rows: 行数据，每个 = {
+            "action": "宣传/传播",        # 动作维度
+            "note": "（高管访谈+季度复盘会）", # 动作说明（可选）
+            "good": "321世界睡眠日...",   # 做得好的内容
+            "bad": "科普/义诊合计2100场"  # 做得不好/需改进的
+        }
+        footer_note: 底部总结（可选）
+    """
+    title = slide_spec.get('title', '')
+    badge = slide_spec.get('badge', '')
+    category_header = slide_spec.get('category_header', '有效动作')
+    good_header = slide_spec.get('good_header', '做的好')
+    bad_header = slide_spec.get('bad_header', '做得不好')
+    rows = slide_spec.get('rows', [])
+    footer_note = slide_spec.get('footer_note', '')
+
+    # 设置标题
+    for shape in slide.shapes:
+        if shape.is_placeholder:
+            ph_type = str(shape.placeholder_format.type).split('.')[-1]
+            if 'TITLE' in ph_type:
+                set_text_frame_text(shape, title, font_size=26, bold=True)
+
+    # 删除所有 BODY 占位符
+    for shape in slide.shapes:
+        if shape.is_placeholder:
+            ph_type = str(shape.placeholder_format.type).split('.')[-1]
+            if 'BODY' in ph_type:
+                remove_shape(shape)
+
+    if not rows:
+        return
+
+    # ── 布局参数 ──
+    margin_left  = Inches(0.3)
+    margin_top   = Inches(1.45)
+    col1_w       = Inches(2.2)     # 动作列
+    col2_w       = Inches(4.85)    # 做的好列
+    col3_w       = Inches(4.85)    # 做得不好列
+    header_h     = Inches(0.45)    # 表头高度
+    row_h_min    = Inches(0.95)    # 最小行高
+    row_padding  = Inches(0.06)    # 行间距
+
+    # 计算可用高度
+    available_h = prs.slide_height - margin_top - header_h - Inches(0.8)
+    n_rows = len(rows)
+    calc_h = (available_h - row_padding * (n_rows - 1)) / n_rows
+    row_h = max(row_h_min, min(calc_h, Inches(1.4)))
+
+    # ── 绘制表头 ──
+    # 动作列表头（深绿）
+    add_shape_rect(slide, margin_left, margin_top,
+                   col1_w, header_h, fill_color=SIMCERE_COLORS['accent3'])
+    _add_centered_text(slide, margin_left, margin_top,
+                       col1_w, header_h, category_header,
+                       font_size=13, color=SIMCERE_COLORS['lt1'], bold=True)
+
+    # 做的好表头（浅绿）
+    add_shape_rect(slide, margin_left + col1_w, margin_top,
+                   col2_w, header_h, fill_color=SIMCERE_COLORS['accent2'])
+    _add_centered_text(slide, margin_left + col1_w, margin_top,
+                       col2_w, header_h, f'✓  {good_header}',
+                       font_size=13, color=SIMCERE_COLORS['lt1'], bold=True)
+
+    # 做得不好表头（橙黄色）
+    bad_bg = SIMCERE_COLORS['accent5']
+    add_shape_rect(slide, margin_left + col1_w + col2_w, margin_top,
+                   col3_w, header_h, fill_color=bad_bg)
+    _add_centered_text(slide, margin_left + col1_w + col2_w, margin_top,
+                       col3_w, header_h, f'⚠  {bad_header}',
+                       font_size=13, color=SIMCERE_COLORS['dk1'], bold=True)
+
+    # ── 角标 ──
+    if badge:
+        badge_x = margin_left - Inches(0.15)
+        badge_y = margin_top - Inches(0.02)
+        add_shape_rect(slide, badge_x, badge_y,
+                       Inches(1.2), Inches(0.38),
+                       fill_color=SIMCERE_COLORS['accent1'])
+        _add_centered_text(slide, badge_x, badge_y,
+                           Inches(1.2), Inches(0.38), badge,
+                           font_size=12, color=SIMCERE_COLORS['lt1'], bold=True)
+
+    # ── 逐行绘制 ──
+    for r_idx, row in enumerate(rows):
+        row_y      = margin_top + header_h + r_idx * (row_h + row_padding)
+        action     = row.get('action', '')
+        note       = row.get('note', '')
+        good       = row.get('good', '')
+        bad        = row.get('bad', '')
+        row_color  = SIMCERE_COLORS['accent3'] if r_idx % 2 == 0 else SIMCERE_COLORS['accent1']
+
+        # 动作列背景
+        add_shape_rect(slide, margin_left, row_y,
+                       col1_w, row_h, fill_color=row_color)
+        # 动作文字
+        action_text = action
+        if note:
+            action_text += f'\n{note}'
+        _add_centered_text(slide, margin_left, row_y,
+                           col1_w, row_h, action_text,
+                           font_size=11, color=SIMCERE_COLORS['lt1'], bold=True,
+                           word_wrap=True)
+
+        # 做的好列
+        good_bg = SIMCERE_COLORS['hk_green'] if r_idx % 2 == 0 else RGBColor(0xFF, 0xFF, 0xFF)
+        add_shape_rect(slide, margin_left + col1_w, row_y,
+                       col2_w, row_h, fill_color=good_bg)
+        _add_left_text(slide, margin_left + col1_w + Inches(0.12), row_y + Inches(0.06),
+                       col2_w - Inches(0.24), row_h - Inches(0.12), good,
+                       font_size=10, color=SIMCERE_COLORS['dk1'], word_wrap=True)
+
+        # 做得不好列
+        bad_bg = SIMCERE_COLORS['hlk_orange'] if r_idx % 2 == 0 else RGBColor(0xFF, 0xFF, 0xFF)
+        add_shape_rect(slide, margin_left + col1_w + col2_w, row_y,
+                       col3_w, row_h, fill_color=bad_bg)
+        _add_left_text(slide, margin_left + col1_w + col2_w + Inches(0.12), row_y + Inches(0.06),
+                       col3_w - Inches(0.24), row_h - Inches(0.12), bad,
+                       font_size=10, color=SIMCERE_COLORS['dk1'], word_wrap=True)
+
+    # ── 底部总结 ──
+    if footer_note:
+        note_y = margin_top + header_h + n_rows * (row_h + row_padding) + Inches(0.1)
+        txBox = slide.shapes.add_textbox(margin_left, note_y,
+                                         prs.slide_width - margin_left * 2, Inches(0.35))
+        tf = txBox.text_frame
+        tf.word_wrap = True
+        p = tf.paragraphs[0]
+        p.text = footer_note
+        p.font.size = Pt(9)
+        p.font.name = '微软雅黑'
+        p.font.color.rgb = SIMCERE_COLORS['lt2']
+        p.font.italic = True
+
+
+# ============================================================
+# 新增：action_category — 分类复盘页（持续做/优化提升/开始做）
+# 参考：科唯可-汇报任董0528（第5-7页分类复盘）
+# ============================================================
+def build_action_category_slide(prs, slide, slide_spec):
+    """构建分类复盘页面
+
+    适用于"做的好→持续做"、"做得不好→优化提升"、"没有做→开始做"
+    三种分类复盘场景。
+
+    参数:
+        title: 页面标题（如"有效动作 × 做的好 --- 持续做"）
+        badge: 角标（如"反思与改进"）
+        intro: 页面说明文字（可选）
+        categories: 分类列表，每个 = {
+            "label": "行业影响力",         # 类别标签（左侧色块）
+            "items": [                      # 该类别下的具体动作
+                "行业会议：2026年西普会...",
+                "品类领导者站位：发布白皮书..."
+            ]
+        }
+        highlight_box: 高亮提示框（可选），= {"title": "...",  "text": "..."}
+    """
+    title = slide_spec.get('title', '')
+    badge = slide_spec.get('badge', '')
+    intro = slide_spec.get('intro', '')
+    categories = slide_spec.get('categories', [])
+    highlight = slide_spec.get('highlight_box', None)
+
+    # 设置标题
+    for shape in slide.shapes:
+        if shape.is_placeholder:
+            ph_type = str(shape.placeholder_format.type).split('.')[-1]
+            if 'TITLE' in ph_type:
+                set_text_frame_text(shape, title, font_size=26, bold=True)
+
+    # 删除所有 BODY 占位符
+    for shape in slide.shapes:
+        if shape.is_placeholder:
+            ph_type = str(shape.placeholder_format.type).split('.')[-1]
+            if 'BODY' in ph_type:
+                remove_shape(shape)
+
+    if not categories:
+        return
+
+    # ── 布局参数 ──
+    margin_left  = Inches(0.3)
+    body_top     = Inches(1.35)
+
+    # 角标
+    if badge:
+        add_shape_rect(slide, margin_left, body_top,
+                       Inches(1.6), Inches(0.34),
+                       fill_color=SIMCERE_COLORS['accent1'])
+        _add_centered_text(slide, margin_left, body_top,
+                           Inches(1.6), Inches(0.34), badge,
+                           font_size=11, color=SIMCERE_COLORS['lt1'], bold=True)
+
+    # 说明文字
+    current_y = body_top + Inches(0.55) if badge else body_top
+
+    if intro:
+        txBox = slide.shapes.add_textbox(margin_left, current_y,
+                                         prs.slide_width - margin_left * 2, Inches(0.4))
+        tf = txBox.text_frame
+        tf.word_wrap = True
+        p = tf.paragraphs[0]
+        p.text = intro
+        p.font.size = Pt(11)
+        p.font.name = '微软雅黑'
+        p.font.color.rgb = SIMCERE_COLORS['dk2']
+        current_y += Inches(0.5)
+
+    # ── 逐分类绘制 ──
+    # 计算可用空间，自适应每个分类的高度
+    total_items = sum(len(c.get('items', [])) for c in categories)
+    remaining_h = prs.slide_height - current_y - Inches(0.7)
+    if highlight:
+        remaining_h -= Inches(0.75)
+    item_h = remaining_h / max(total_items, 1)
+    item_h = min(item_h, Inches(0.35))
+
+    for c_idx, cat in enumerate(categories):
+        label = cat.get('label', '')
+        items = cat.get('items', [])
+        cat_color = [SIMCERE_COLORS['accent3'], SIMCERE_COLORS['accent1'],
+                     SIMCERE_COLORS['accent2']][c_idx % 3]
+        n = len(items)
+        cat_h = max(item_h * n, Inches(0.5))
+
+        # 左侧色块标签
+        label_w = Inches(1.8)
+        add_shape_rect(slide, margin_left, current_y,
+                       label_w, cat_h, fill_color=cat_color)
+        _add_centered_text(slide, margin_left, current_y,
+                           label_w, cat_h, label,
+                           font_size=12, color=SIMCERE_COLORS['lt1'], bold=True,
+                           word_wrap=True)
+
+        # 右侧物品列表
+        for i_idx, item_text in enumerate(items):
+            row_y = current_y + i_idx * item_h
+            bg = SIMCERE_COLORS['hk_green'] if i_idx % 2 == 0 else RGBColor(0xFF, 0xFF, 0xFF)
+            add_shape_rect(slide, margin_left + label_w, row_y,
+                           prs.slide_width - margin_left * 2 - label_w, item_h,
+                           fill_color=bg)
+            _add_left_text(slide, margin_left + label_w + Inches(0.12),
+                           row_y + Inches(0.02),
+                           prs.slide_width - margin_left * 2 - label_w - Inches(0.24),
+                           item_h, f'• {item_text}',
+                           font_size=10, color=SIMCERE_COLORS['dk1'], word_wrap=True)
+
+        current_y += cat_h + Inches(0.08)
+
+    # 高亮提示框
+    if highlight:
+        current_y += Inches(0.1)
+        box_title = highlight.get('title', '')
+        box_text  = highlight.get('text', '')
+        add_shape_rect(slide, margin_left, current_y,
+                       prs.slide_width - margin_left * 2, Inches(0.6),
+                       fill_color=SIMCERE_COLORS['hlk_green'])
+
+        if box_title:
+            _add_left_text(slide, margin_left + Inches(0.12), current_y + Inches(0.02),
+                           prs.slide_width - margin_left * 2 - Inches(0.24), Inches(0.3),
+                           box_title, font_size=11, color=SIMCERE_COLORS['accent3'], bold=True)
+            _add_left_text(slide, margin_left + Inches(0.12), current_y + Inches(0.28),
+                           prs.slide_width - margin_left * 2 - Inches(0.24), Inches(0.28),
+                           box_text, font_size=9, color=SIMCERE_COLORS['dk1'], word_wrap=True)
+        else:
+            _add_left_text(slide, margin_left + Inches(0.12), current_y + Inches(0.06),
+                           prs.slide_width - margin_left * 2 - Inches(0.24), Inches(0.48),
+                           box_text, font_size=10, color=SIMCERE_COLORS['dk1'], word_wrap=True)
+
+
+# ============================================================
+# 新增：strategy_diagram — 策略架构图（形状+箭头+分层）
+# 参考：科唯可-汇报任董0528（第8页健康驿站架构图）
+# ============================================================
+def build_strategy_diagram_slide(prs, slide, slide_spec):
+    """构建策略架构图页面
+
+    适用于：展示多维度升级策略、系统架构、项目推进路线等。
+    由上级节点 + 下级子节点 + 箭头连接组成。
+
+    参数:
+        title: 页面标题
+        badge: 角标（可选）
+        diagram: {
+            "center": {"text": "睡眠健康驿站", "sub": "基础建设升级"},
+            "dimensions": [                    # 升级维度（4-6个）
+                {
+                    "label": "陈列升级",       # 维度名称（箭头标签）
+                    "items": ["旗舰店", "标准店", "全门店"],  # 子节点
+                    "sub_label": "硬件"         # 层次标签（可选）
+                },
+                ...
+            ],
+            "pillars": [                       # 支撑策略（底部，可选）
+                {"label": "平台引流", "sub": "互动体验"},
+                {"label": "线上/线下科普", "sub": "检测工具"},
+                ...
+            ]
+        }
+    """
+    title = slide_spec.get('title', '')
+    badge = slide_spec.get('badge', '')
+    diagram = slide_spec.get('diagram', {})
+
+    # 设置标题
+    for shape in slide.shapes:
+        if shape.is_placeholder:
+            ph_type = str(shape.placeholder_format.type).split('.')[-1]
+            if 'TITLE' in ph_type:
+                set_text_frame_text(shape, title, font_size=26, bold=True)
+
+    # 删除所有 BODY 占位符
+    for shape in slide.shapes:
+        if shape.is_placeholder:
+            ph_type = str(shape.placeholder_format.type).split('.')[-1]
+            if 'BODY' in ph_type:
+                remove_shape(shape)
+
+    if not diagram:
+        return
+
+    center = diagram.get('center', {})
+    dimensions = diagram.get('dimensions', [])
+    pillars = diagram.get('pillars', [])
+
+    # ── 布局参数 ──
+    margin_left  = Inches(0.3)
+    margin_top   = Inches(1.2)
+
+    # 角标
+    if badge:
+        add_shape_rect(slide, margin_left, margin_top,
+                       Inches(1.6), Inches(0.34),
+                       fill_color=SIMCERE_COLORS['accent1'])
+        _add_centered_text(slide, margin_left, margin_top,
+                           Inches(1.6), Inches(0.34), badge,
+                           font_size=11, color=SIMCERE_COLORS['lt1'], bold=True)
+
+    # ── 中心节点 ──
+    center_text = center.get('text', '')
+    center_sub  = center.get('sub', '')
+    center_x = Inches(5.2)
+    center_y = margin_top + Inches(0.15)
+    center_w = Inches(3.2)
+    center_h = Inches(0.75) if center_sub else Inches(0.55)
+
+    add_shape_rect(slide, center_x, center_y,
+                   center_w, center_h, fill_color=SIMCERE_COLORS['accent3'],
+                   line_color=SIMCERE_COLORS['accent1'], line_width=Pt(2))
+
+    if center_sub:
+        _add_centered_text(slide, center_x, center_y,
+                           center_w, Inches(0.32), center_text,
+                           font_size=13, color=SIMCERE_COLORS['lt1'], bold=True)
+        _add_centered_text(slide, center_x, center_y + Inches(0.35),
+                           center_w, Inches(0.3), center_sub,
+                           font_size=9, color=RGBColor(0xC8, 0xEB, 0xD6))
+    else:
+        _add_centered_text(slide, center_x, center_y,
+                           center_w, center_h, center_text,
+                           font_size=14, color=SIMCERE_COLORS['lt1'], bold=True)
+
+    # ── 维度节点 ──
+    n_dims = len(dimensions)
+    if n_dims == 0:
+        return
+
+    dim_spacing = Inches(8.5) / max(n_dims, 1)
+    dim_start_x = margin_left + Inches(2.0)
+
+    for d_idx, dim in enumerate(dimensions):
+        dim_label = dim.get('label', '')
+        dim_items = dim.get('items', [])
+        sub_label = dim.get('sub_label', '')
+
+        dim_x = dim_start_x + d_idx * dim_spacing
+        dim_w = dim_spacing - Inches(0.15)
+        dim_y = center_y + center_h + Inches(0.25)
+
+        # 箭头标签（绿色药丸形状）
+        arrow_w = Inches(1.35)
+        arrow_h = Inches(0.35)
+        arrow_x = dim_x + dim_w / 2 - arrow_w / 2
+
+        # 箭头形状
+        from pptx.enum.shapes import MSO_SHAPE
+        arrow_shape = slide.shapes.add_shape(
+            MSO_SHAPE.CHEVRON, arrow_x, dim_y, arrow_w, arrow_h
+        )
+        arrow_shape.fill.solid()
+        arrow_shape.fill.fore_color.rgb = SIMCERE_COLORS['accent2']
+        arrow_shape.line.fill.background()
+        if arrow_shape.has_text_frame:
+            tf = arrow_shape.text_frame
+            tf.word_wrap = False
+            p = tf.paragraphs[0]
+            p.text = dim_label
+            p.font.size = Pt(10)
+            p.font.name = '微软雅黑'
+            p.font.bold = True
+            p.font.color.rgb = SIMCERE_COLORS['lt1']
+            p.alignment = PP_ALIGN.CENTER
+
+        # 子标签
+        if sub_label:
+            sub_y = dim_y + arrow_h + Inches(0.05)
+            _add_centered_text(slide, dim_x, sub_y,
+                               dim_w, Inches(0.22), sub_label,
+                               font_size=8, color=SIMCERE_COLORS['lt2'])
+
+        # 子节点（圆角矩形）
+        sub_start_y = dim_y + arrow_h + (Inches(0.35) if sub_label else Inches(0.1))
+        for i_idx, item in enumerate(dim_items):
+            rect_w = dim_w - Inches(0.1)
+            rect_h = Inches(0.32)
+            rect_x = dim_x + Inches(0.05)
+            rect_y = sub_start_y + i_idx * Inches(0.4)
+
+            from pptx.enum.shapes import MSO_SHAPE
+            node = slide.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE, rect_x, rect_y, rect_w, rect_h
+            )
+            node.fill.solid()
+            node.fill.fore_color.rgb = SIMCERE_COLORS['hk_green']
+            node.line.color.rgb = RGBColor(0xDD, 0xDD, 0xDD)
+            node.line.width = Pt(0.5)
+
+            if node.has_text_frame:
+                tf = node.text_frame
+                tf.word_wrap = True
+                p = tf.paragraphs[0]
+                p.text = item
+                p.font.size = Pt(9)
+                p.font.name = '微软雅黑'
+                p.font.color.rgb = SIMCERE_COLORS['dk1']
+                p.alignment = PP_ALIGN.CENTER
+
+    # ── 底部支撑策略 ──
+    if pillars:
+        max_dim_bottom = margin_top + center_h + Inches(0.25) + (Inches(0.35) + Inches(0.1) + 3 * Inches(0.4))
+        pillar_y = min(max_dim_bottom + Inches(0.3), prs.slide_height - Inches(1.2))
+        n_pillars = len(pillars)
+        pillar_spacing = Inches(8.5) / max(n_pillars, 1)
+        pillar_start_x = margin_left + Inches(2.0)
+
+        # 分隔线
+        from pptx.enum.shapes import MSO_SHAPE
+        line = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            margin_left, pillar_y, prs.slide_width - margin_left * 2, Inches(0.015)
+        )
+        line.fill.solid()
+        line.fill.fore_color.rgb = SIMCERE_COLORS['accent2']
+        line.line.fill.background()
+
+        # 标题
+        _add_left_text(slide, margin_left, pillar_y + Inches(0.1),
+                       Inches(1.8), Inches(0.3), '四维服务升级',
+                       font_size=10, color=SIMCERE_COLORS['accent3'], bold=True)
+
+        for p_idx, pillar in enumerate(pillars):
+            p_label = pillar.get('label', '')
+            p_sub   = pillar.get('sub', '')
+            px = pillar_start_x + p_idx * pillar_spacing
+            pw = pillar_spacing - Inches(0.15)
+            py = pillar_y + Inches(0.15)
+
+            node = slide.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE, px, py, pw, Inches(0.55)
+            )
+            node.fill.solid()
+            node.fill.fore_color.rgb = SIMCERE_COLORS['hk_green']
+            node.line.color.rgb = SIMCERE_COLORS['accent2']
+            node.line.width = Pt(1)
+
+            if node.has_text_frame:
+                tf = node.text_frame
+                tf.word_wrap = True
+                p1 = tf.paragraphs[0]
+                p1.text = p_label
+                p1.font.size = Pt(10)
+                p1.font.name = '微软雅黑'
+                p1.font.bold = True
+                p1.font.color.rgb = SIMCERE_COLORS['dk1']
+                p1.alignment = PP_ALIGN.CENTER
+
+                if p_sub:
+                    p2 = tf.add_paragraph()
+                    p2.text = p_sub
+                    p2.font.size = Pt(8)
+                    p2.font.name = '微软雅黑'
+                    p2.font.color.rgb = SIMCERE_COLORS['lt2']
+                    p2.alignment = PP_ALIGN.CENTER
+
+
+# ============================================================
 # build_slide 分发逻辑（在文件末尾，build_slide函数内追加）
 # ============================================================
 
@@ -1922,6 +2435,18 @@ def build_slide(prs, slide_spec):
     # === 日历网格（月度规划） ===
     elif slide_type == 'calendar_grid':
         build_calendar_grid_slide(prs, slide, slide_spec)
+
+    # === 复盘矩阵（有效动作×做的好/做的不好） ===
+    elif slide_type == 'review_matrix':
+        build_review_matrix_slide(prs, slide, slide_spec)
+
+    # === 分类复盘页（持续做/优化提升/开始做） ===
+    elif slide_type == 'action_category':
+        build_action_category_slide(prs, slide, slide_spec)
+
+    # === 策略架构图 ===
+    elif slide_type == 'strategy_diagram':
+        build_strategy_diagram_slide(prs, slide, slide_spec)
 
     # === 仅标题页 ===
     elif slide_type == 'title_only':
