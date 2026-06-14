@@ -175,14 +175,25 @@ def remove_shape(shape):
     sp.getparent().remove(sp)
 
 
-def remove_body_placeholders(slide):
-    """删除 slide 上所有 BODY 占位符，使用先收集再删除模式避免跳过"""
+def remove_placeholders(slide, types_to_remove=None):
+    """删除 slide 上指定类型的占位符，使用先收集再删除模式避免跳过。
+
+    Args:
+        slide: pptx slide 对象
+        types_to_remove: 要删除的占位符类型列表，如 ['BODY', 'OBJECT']。
+                         默认删除 BODY 和 OBJECT。
+    """
+    if types_to_remove is None:
+        types_to_remove = ['BODY', 'OBJECT']
+
     shapes_to_remove = []
     for shape in slide.shapes:
         if shape.is_placeholder:
             ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                shapes_to_remove.append(shape)
+            for placeholder_type in types_to_remove:
+                if placeholder_type in ph_type:
+                    shapes_to_remove.append(shape)
+                    break
     for shape in shapes_to_remove:
         remove_shape(shape)
 
@@ -548,15 +559,8 @@ def build_gantt_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
-    shapes_to_remove = []
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                shapes_to_remove.append(shape)
-    for shape in shapes_to_remove:
-        remove_shape(shape)
+    # 删除 BODY 和 OBJECT 占位符（先收集再删除，避免遍历时修改集合）
+    remove_placeholders(slide)
 
     # 布局计算
     margin_left = Inches(0.6)
@@ -714,15 +718,8 @@ def build_timeline_horizontal_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
-    shapes_to_remove = []
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                shapes_to_remove.append(shape)
-    for shape in shapes_to_remove:
-        remove_shape(shape)
+    # 删除 BODY 和 OBJECT 占位符（先收集再删除，避免遍历时修改集合）
+    remove_placeholders(slide)
 
     # 顶部逻辑主线说明
     if subtitle_text:
@@ -849,15 +846,8 @@ def build_big_number_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
-    shapes_to_remove = []
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                shapes_to_remove.append(shape)
-    for shape in shapes_to_remove:
-        remove_shape(shape)
+    # 删除 BODY 和 OBJECT 占位符（先收集再删除，避免遍历时修改集合）
+    remove_placeholders(slide)
 
     # 大数字区域（左侧）
     big_num_left = Inches(0.6)
@@ -1015,15 +1005,8 @@ def build_comparison_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
-    shapes_to_remove = []
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                shapes_to_remove.append(shape)
-    for shape in shapes_to_remove:
-        remove_shape(shape)
+    # 删除 BODY 和 OBJECT 占位符（先收集再删除，避免遍历时修改集合）
+    remove_placeholders(slide)
 
     # 引言
     if intro:
@@ -1151,15 +1134,8 @@ def build_item_matrix_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
 
-    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
-    shapes_to_remove = []
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                shapes_to_remove.append(shape)
-    for shape in shapes_to_remove:
-        remove_shape(shape)
+    # 删除 BODY 和 OBJECT 占位符（先收集再删除，避免遍历时修改集合）
+    remove_placeholders(slide)
 
     if not groups:
         return
@@ -1380,15 +1356,8 @@ def build_calendar_grid_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
 
-    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
-    shapes_to_remove = []
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                shapes_to_remove.append(shape)
-    for shape in shapes_to_remove:
-        remove_shape(shape)
+    # 删除 BODY 和 OBJECT 占位符（先收集再删除，避免遍历时修改集合）
+    remove_placeholders(slide)
 
     if not rows or not months:
         return
@@ -1585,8 +1554,8 @@ def build_review_matrix_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=26, bold=True)
 
-    # 删除所有 BODY 占位符
-    remove_body_placeholders(slide)
+    # 删除所有 BODY 和 OBJECT 占位符
+    remove_placeholders(slide)
 
     if not rows:
         return
@@ -1729,8 +1698,8 @@ def build_action_category_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=26, bold=True)
 
-    # 删除所有 BODY 占位符
-    remove_body_placeholders(slide)
+    # 删除所有 BODY 和 OBJECT 占位符
+    remove_placeholders(slide)
 
     if not categories:
         return
@@ -1867,8 +1836,8 @@ def build_strategy_diagram_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=26, bold=True)
 
-    # 删除所有 BODY 占位符
-    remove_body_placeholders(slide)
+    # 删除所有 BODY 和 OBJECT 占位符
+    remove_placeholders(slide)
 
     if not diagram:
         return
@@ -2070,15 +2039,8 @@ def build_process_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
-    shapes_to_remove = []
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                shapes_to_remove.append(shape)
-    for shape in shapes_to_remove:
-        remove_shape(shape)
+    # 删除 BODY 和 OBJECT 占位符（先收集再删除，避免遍历时修改集合）
+    remove_placeholders(slide)
 
     if not steps:
         return
@@ -2159,15 +2121,8 @@ def build_kpi_dashboard_slide(prs, slide, slide_spec):
             if 'TITLE' in ph_type:
                 set_text_frame_text(shape, title, font_size=28, bold=True)
     
-    # 删除BODY占位符（先收集再删除，避免遍历时修改集合）
-    shapes_to_remove = []
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                shapes_to_remove.append(shape)
-    for shape in shapes_to_remove:
-        remove_shape(shape)
+    # 删除 BODY 和 OBJECT 占位符（先收集再删除，避免遍历时修改集合）
+    remove_placeholders(slide)
 
     if not kpis:
         return
@@ -2289,8 +2244,8 @@ def build_slide(prs, slide_spec):
             p.font.size = Pt(14)
             p.font.name = '微软雅黑'
 
-        # 删除所有 BODY 占位符（封面不需要模板的 BODY 框）
-        remove_body_placeholders(slide)
+        # 删除所有 BODY 和 OBJECT 占位符（封面不需要模板的 BODY/OBJECT 框）
+        remove_placeholders(slide)
     
     # === 目录 ===
     elif slide_type == 'toc':
@@ -2329,27 +2284,22 @@ def build_slide(prs, slide_spec):
                 p.font.name = '微软雅黑'
                 p.space_after = Pt(16)
 
-        # 删除模板残留的 BODY 占位符
-        remove_body_placeholders(slide)
+        # 删除模板残留的 BODY 和 OBJECT 占位符
+        remove_placeholders(slide)
     
     # === 节标题 ===
     elif slide_type == 'section':
         title = slide_spec.get('title', '')
         subtitle = slide_spec.get('subtitle', '')
         
-        # 收集所有BODY占位符，按面积排序，只填最大的那个
-        body_placeholders = []
         for shape in slide.shapes:
             if shape.is_placeholder:
                 ph_type = str(shape.placeholder_format.type).split('.')[-1]
                 if 'TITLE' in ph_type:
                     set_text_frame_text(shape, title, font_size=32, bold=True)
-                elif 'BODY' in ph_type:
-                    area = shape.width.emu * shape.height.emu
-                    body_placeholders.append((area, shape))
         
-        # 删除所有 BODY 占位符
-        remove_body_placeholders(slide)
+        # 删除所有 BODY 和 OBJECT 占位符
+        remove_placeholders(slide)
         # 如果有副标题，在标题下方新建文本框
         if subtitle:
             txBox = slide.shapes.add_textbox(Inches(0.7), Inches(1.5), Inches(11.5), Inches(0.5))
@@ -2375,8 +2325,8 @@ def build_slide(prs, slide_spec):
                 if 'TITLE' in ph_type:
                     set_text_frame_text(shape, title, font_size=28, bold=True)
 
-        # 删除所有 BODY 占位符（避免模板残留或占位）
-        remove_body_placeholders(slide)
+        # 删除所有 BODY 和 OBJECT 占位符（避免模板残留或占位）
+        remove_placeholders(slide)
         # 如果有副标题，在标题下方新建文本框
         if subtitle:
             txBox = slide.shapes.add_textbox(Inches(0.7), Inches(1.1), Inches(11.5), Inches(0.4))
@@ -2493,6 +2443,7 @@ def build_slide(prs, slide_spec):
     elif slide_type == 'title_only':
         title = slide_spec.get('title', '')
         set_placeholder_text(slide, 'TITLE', title)
+        remove_placeholders(slide)
 
     # === 空白页 ===
     elif slide_type == 'blank':
@@ -2524,18 +2475,8 @@ def build_slide(prs, slide_spec):
                 elif 'BODY' in ph_type:
                     set_text_frame_text(shape, subtitle, font_size=18)
 
-        # ending 页保留第一个 BODY（写副标题用），删除多余的
-        shapes_to_remove = []
-        body_count = 0
-        for shape in slide.shapes:
-            if shape.is_placeholder:
-                ph_type = str(shape.placeholder_format.type).split('.')[-1]
-                if 'BODY' in ph_type:
-                    body_count += 1
-                    if body_count > 1:
-                        shapes_to_remove.append(shape)
-        for shape in shapes_to_remove:
-            remove_shape(shape)
+        # ending 页：保留 BODY（写副标题），只删 OBJECT
+        remove_placeholders(slide, types_to_remove=['OBJECT'])
     
     return slide
 
