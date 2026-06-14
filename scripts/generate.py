@@ -175,6 +175,18 @@ def remove_shape(shape):
     sp.getparent().remove(sp)
 
 
+def remove_body_placeholders(slide):
+    """删除 slide 上所有 BODY 占位符，使用先收集再删除模式避免跳过"""
+    shapes_to_remove = []
+    for shape in slide.shapes:
+        if shape.is_placeholder:
+            ph_type = str(shape.placeholder_format.type).split('.')[-1]
+            if 'BODY' in ph_type:
+                shapes_to_remove.append(shape)
+    for shape in shapes_to_remove:
+        remove_shape(shape)
+
+
 def add_bullet_points(shape, items, font_name='微软雅黑', font_size=14):
     """向文本框添加项目符号列表"""
     if not shape.has_text_frame:
@@ -1574,11 +1586,7 @@ def build_review_matrix_slide(prs, slide, slide_spec):
                 set_text_frame_text(shape, title, font_size=26, bold=True)
 
     # 删除所有 BODY 占位符
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                remove_shape(shape)
+    remove_body_placeholders(slide)
 
     if not rows:
         return
@@ -1722,11 +1730,7 @@ def build_action_category_slide(prs, slide, slide_spec):
                 set_text_frame_text(shape, title, font_size=26, bold=True)
 
     # 删除所有 BODY 占位符
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                remove_shape(shape)
+    remove_body_placeholders(slide)
 
     if not categories:
         return
@@ -1864,11 +1868,7 @@ def build_strategy_diagram_slide(prs, slide, slide_spec):
                 set_text_frame_text(shape, title, font_size=26, bold=True)
 
     # 删除所有 BODY 占位符
-    for shape in slide.shapes:
-        if shape.is_placeholder:
-            ph_type = str(shape.placeholder_format.type).split('.')[-1]
-            if 'BODY' in ph_type:
-                remove_shape(shape)
+    remove_body_placeholders(slide)
 
     if not diagram:
         return
@@ -2264,6 +2264,7 @@ def build_slide(prs, slide_spec):
         subtitle = slide_spec.get('subtitle', '')
         date = slide_spec.get('date', '')
         presenter = slide_spec.get('presenter', '')
+        cover_body_specs = []
         
         for shape in slide.shapes:
             if shape.is_placeholder:
@@ -2277,6 +2278,19 @@ def build_slide(prs, slide_spec):
                     if presenter:
                         text += f"\n{presenter}" if text else presenter
                     set_text_frame_text(shape, text, font_size=14)
+                    if text:
+                        cover_body_specs.append((shape.left, shape.top, shape.width, shape.height, text))
+
+        for left, top, width, height, text in cover_body_specs:
+            txBox = slide.shapes.add_textbox(left, top, width, height)
+            tf = txBox.text_frame
+            p = tf.paragraphs[0]
+            p.text = text
+            p.font.size = Pt(14)
+            p.font.name = '微软雅黑'
+
+        # 删除所有 BODY 占位符（封面不需要模板的 BODY 框）
+        remove_body_placeholders(slide)
     
     # === 目录 ===
     elif slide_type == 'toc':
@@ -2297,7 +2311,13 @@ def build_slide(prs, slide_spec):
             body_ph = find_placeholder(slide, 'BODY')
         
         if body_ph and items:
-            tf = body_ph.text_frame
+            target_shape = body_ph
+            if body_ph.is_placeholder and 'BODY' in str(body_ph.placeholder_format.type).split('.')[-1]:
+                target_shape = slide.shapes.add_textbox(
+                    body_ph.left, body_ph.top, body_ph.width, body_ph.height
+                )
+
+            tf = target_shape.text_frame
             tf.clear()
             for i, item in enumerate(items):
                 if i == 0:
@@ -2308,6 +2328,9 @@ def build_slide(prs, slide_spec):
                 p.font.size = Pt(18)
                 p.font.name = '微软雅黑'
                 p.space_after = Pt(16)
+
+        # 删除模板残留的 BODY 占位符
+        remove_body_placeholders(slide)
     
     # === 节标题 ===
     elif slide_type == 'section':
@@ -2326,8 +2349,7 @@ def build_slide(prs, slide_spec):
                     body_placeholders.append((area, shape))
         
         # 删除所有 BODY 占位符
-        for _, shape in body_placeholders:
-            remove_shape(shape)
+        remove_body_placeholders(slide)
         # 如果有副标题，在标题下方新建文本框
         if subtitle:
             txBox = slide.shapes.add_textbox(Inches(0.7), Inches(1.5), Inches(11.5), Inches(0.5))
@@ -2346,10 +2368,6 @@ def build_slide(prs, slide_spec):
         table_data = slide_spec.get('table')
         chart_spec = slide_spec.get('chart')
 
-        # 收集所有 BODY 占位符
-        body_placeholders = [s for s in slide.shapes if s.is_placeholder
-                             and 'BODY' in str(s.placeholder_format.type).split('.')[-1]]
-
         # 设置标题
         for shape in slide.shapes:
             if shape.is_placeholder:
@@ -2358,8 +2376,7 @@ def build_slide(prs, slide_spec):
                     set_text_frame_text(shape, title, font_size=28, bold=True)
 
         # 删除所有 BODY 占位符（避免模板残留或占位）
-        for s in body_placeholders:
-            remove_shape(s)
+        remove_body_placeholders(slide)
         # 如果有副标题，在标题下方新建文本框
         if subtitle:
             txBox = slide.shapes.add_textbox(Inches(0.7), Inches(1.1), Inches(11.5), Inches(0.4))
@@ -2506,6 +2523,19 @@ def build_slide(prs, slide_spec):
                     set_text_frame_text(shape, title, font_size=40, bold=True)
                 elif 'BODY' in ph_type:
                     set_text_frame_text(shape, subtitle, font_size=18)
+
+        # ending 页保留第一个 BODY（写副标题用），删除多余的
+        shapes_to_remove = []
+        body_count = 0
+        for shape in slide.shapes:
+            if shape.is_placeholder:
+                ph_type = str(shape.placeholder_format.type).split('.')[-1]
+                if 'BODY' in ph_type:
+                    body_count += 1
+                    if body_count > 1:
+                        shapes_to_remove.append(shape)
+        for shape in shapes_to_remove:
+            remove_shape(shape)
     
     return slide
 
