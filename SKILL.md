@@ -1062,71 +1062,122 @@ python scripts/generate.py \
 
 # 第四部分：页面类型参考
 
-## 完整页面类型清单
+## 完整页面类型清单（19种）
 
 | 类型 | 模板版式 | 核心参数 | 适用场景 |
 |------|---------|---------|---------|
 | `cover` | 封面 | title, subtitle, date, presenter | PPT首页 |
 | `toc` | 1_仅logo页 | title, items[] | 目录/议程 |
 | `section` | 节标题 | title, subtitle | 章节过渡 |
-| `content` | 标题和内容 | title, subtitle, body[], table?, chart? | 大多数内容页 |
-| `gantt` | 标题和内容 | title, rows[], months[], data[], milestones[], conclusion | 月度行动计划 |
-| `timeline_horizontal` | 标题和内容 | title, subtitle, items[{time,title,audience,actions}] | Campaign规划 |
-| `big_number` | 标题和内容 | big_number, unit, description, side_cards[], cards[] | 活动规模/成本拆解 |
-| `comparison` | 标题和内容 | intro, items[{label,value,description}], target, note | 竞品对比 |
+| `content` | 标题和内容 | title, tag?, body[], table?, chart? | 大多数内容页 |
+| `gantt` | 标题和内容 | title, rows[], months[], data[], milestones[], conclusion | 色块式月度行动计划 |
+| `gantt_table` | 标题和内容 | title, subtitle?, rows[{task,start,end,progress,owner,status}], conclusion | **真实表格甘特图**（含进度条+状态色标） |
+| `timeline_horizontal` | 标题和内容 | title, subtitle, items[{time,title,audience,actions}] | Campaign节奏规划 |
+| `big_number` | 标题和内容 | big_number, unit, description, side_cards[], cards[] | 资源投入/核心数字 |
+| `comparison` | 标题和内容 | intro, items[{label,value,description}], target, note | 竞品/方案对比 |
 | `process` | 标题和内容 | steps[{title,description}], direction | 里程碑/流程 |
 | `kpi_dashboard` | 标题和内容 | kpis[{label,value,unit,change,target}] | 指标总览 |
-| `item_matrix` | 标题和内容 | groups[{scene,audience,cost_tier,avg_score,items[]}], footer_notes | 提示物盘点 |
-| `calendar_grid` | 标题和内容 | rows[{name,subtitle}], months[], grid[][], note | 月度排期 |
-| `review_matrix` | 标题和内容 | badge, category_header, good_header, bad_header, rows[{action,note,good,bad}], footer_note | 项目复盘 |
-| `action_category` | 标题和内容 | badge, intro, categories[{label,items[]}], highlight_box | 分类复盘 |
-| `strategy_diagram` | 标题和内容 | badge?, diagram{center,dimensions[{label,items,sub_label}],pillars[{label,sub}]} | 架构展示 |
+| `item_matrix` | 标题和内容 | groups[{scene,audience,cost_tier,avg_score,items[]}], footer_notes | 品牌提示物盘点 |
+| `calendar_grid` | 标题和内容 | rows[{name,subtitle}], months[], grid[][], note | 月度推广排期 |
+| `review_matrix` | 标题和内容 | badge, category_header, good_header, bad_header, rows[{action,note,good,bad}], footer_note | 有效动作复盘矩阵 |
+| `action_category` | 标题和内容 | badge, intro, categories[{label,items[]}], highlight_box | 持续做/优化提升/开始做 |
+| `strategy_diagram` | 标题和内容 | badge?, diagram{center,dimensions[{label,items,sub_label}],pillars[{label,sub}]} | 策略架构展示 |
+| `dual_axis_chart` | 标题和内容 | title, subtitle?, categories[], bar_series{name,values,unit}, line_series{name,values,unit}, note | **双轴图**（柱状+折线，左轴+右轴） |
+| `visual_comparison` | 标题和内容 | title, subtitle?, dimensions[], groups[{name,values,strengths,weaknesses}], highlight_finding | **可视化对比矩阵**（横向柱状图+评分卡片+优劣势） |
 | `chart` | (content子元素) | chart_type, categories[], series[], title | 数据可视化 |
 | `ending` | 末尾幻灯片 | title, subtitle | 结束页 |
 
 ---
 
-# 第五部分：设计规范
+# 第五部分：设计规范（v3.0 精确版）
+
+> 以下参数从官方模板和3份参考PPT中精确提取，覆盖所有字号、颜色、间距。
 
 ## 视觉规范
 
-### 颜色
-- **主色**: accent1 #00B052 (绿色) - 表头、强调、重点标识
-- **辅助色**: accent3 #006647 (深绿) - 二级强调
-- **文字色**: dk1 #333333 (深灰) - 正文
-- **背景色**: lt1 #FFFFFF (白色) - 页面背景
-- **避免**: 高饱和、花哨、互联网感配色
+### 颜色系统（21色，从官方模板theme.xml + 参考PPT提取）
 
-### 字体
-- 中文：**微软雅黑**（全局统一）
-- 英文：**Arial**（全局统一）
+| 类别 | 名称 | 色值 | 用途 |
+|------|------|------|------|
+| **主题主色** | accent1 先声绿 | #00B052 | 表头、强调、重点标识、标签 |
+| | accent2 亮绿 | #8FD400 | 二级表头、箭头标签 |
+| | accent3 深绿 | #006647 | 二级强调、行标题 |
+| | accent4 青色 | #00B5BD | 数据系列 |
+| | accent5 黄色 | #FCC917 | 警告/待改进表头 |
+| | accent6 橙色 | #F56600 | 负面/下降指标 |
+| **文字色** | dk1 正文黑 | #333333 | 正文文字 |
+| | dk2 次级黑 | #44546A | 次级文字 |
+| | lt1 白色 | #FFFFFF | 反白文字、页面背景 |
+| | lt2 浅灰 | #E7E6E6 | 注释文字 |
+| **业务色** | table_header | #00B052 | 表头绿 |
+| | table_stripe | #F0F7F4 | 隔行浅绿 |
+| | tag_green | #029B46 | 标签深绿（品牌提示物风格） |
+| | score_orange | #E48030 | 评分橙 |
+| | hk_green | #E8F5EE | 浅绿背景 |
+| | hlk_green | #C8EBD6 | 高亮浅绿 |
+| | hlk_orange | #FFEDE1 | 浅橙背景 |
+| **架构图色** | strategy_dark | #0AA447 | 架构深绿 |
+| | strategy_mid | #38B72F | 架构中绿 |
+| | strategy_light | #69CA16 | 架构浅绿 |
+| **禁止** | 高饱和、花哨、互联网感配色 | | |
 
-### 字号层级
-| 元素 | 字号 | 样式 |
-|------|------|------|
-| 封面大标题 | 36pt | 粗体 |
-| 页面标题 | 28-32pt | 粗体 |
-| 章节标题 | 32pt | 粗体 |
-| 副标题 | 14-16pt | 常规 |
-| 正文 | 14pt | 常规 |
-| 表格文字 | 11-12pt | 常规 |
+### 字体（东亚字体 + 拉丁字体分别设置）
+- 中文：**微软雅黑**（通过 `a:ea` 设置东亚字体）
+- 英文：**Arial**（通过 `a:latin` 设置拉丁字体）
+- 必须同时设置两种字体，确保中英文混排正确
+
+### 精确字号层级（18级）
+
+| 元素 | 字号 | 样式 | 来源 |
+|------|------|------|------|
+| 封面大标题 | **44pt** | 粗体 | 营销管理参考（官方模板封面标题区高度对应44pt） |
+| 封面副标题 | 20pt | 常规 | 官方模板SUBTITLE占位符 |
+| 节标题 | 32pt | 粗体 | 官方模板TITLE占位符 |
+| 节副标题 | 16pt | 常规 | 官方模板BODY占位符 |
+| 页面标签 | **20pt** | 粗体 | 科唯可风格（如"复盘""反思与改进"） |
+| 页面标题 | **26pt** | 粗体 | 品牌提示物参考（+mn-ea 26pt） |
+| 页面标题备用 | 18pt | 粗体 | 长标题备用 |
+| 主正文 | 16pt | 常规 | 科唯可参考 |
+| 标准正文 | **14pt** | 常规 | 科唯可正文 |
+| 小正文 | 12pt | 常规 | 品牌提示物矩阵文字 |
+| 表头 | 12pt | 粗体白色 | 官方模板表格规范 |
+| 表格正文 | 11pt | 常规 | 官方模板表格规范 |
+| 注释 | 10pt | 常规 | 通用注释 |
+| 微注释 | 9pt | 常规 | 品牌提示物场景说明 |
+| 极小注释 | 7pt | 常规 | 科唯可数据标注 |
+| KPI大数字 | 36pt | 粗体绿色 | 大数字卡片 |
+| KPI标签 | 12pt | 常规 | 大数字标签 |
+| 目录条目 | 18pt | 常规 | 目录页 |
+
+### 段落间距
+
+| 场景 | 段前 | 段后 | 行距 |
+|------|------|------|------|
+| 标题 | 0pt | 8pt | 1.0x |
+| 正文 | 6pt | 3pt | 1.3x |
+| 紧凑 | 2pt | 1pt | 1.15x |
+| 段落分隔 | 12pt | 6pt | 1.3x |
+| 表格 | 0pt | 0pt | 1.0x |
 
 ### 表格规范
 - 必须生成真正的PPT表格对象（非色块拼贴）
-- 表头：绿色背景(#00B052) + 白色粗体文字(12pt)
-- 数据行：11pt，隔行浅绿背景(#F0F7F4)
+- 表头：先声绿背景(#00B052) + 白色粗体文字(12pt) + 居中
+- 数据行：11pt 正文色(#333333)，隔行浅绿背景(#F0F7F4)
+- 列宽自动均分
 
 ### 图表规范
 - 真实图表对象，非截图
-- 配色顺序：绿→亮绿→深绿→青→黄→橙
-- 标题、图例、坐标轴、数据标签完整
+- 配色顺序：accent1→accent2→accent3→accent4→accent5→accent6
+- 标题(14pt粗体)、图例、坐标轴标签(10pt)、数据标签完整
 
 ### 排版规范
 - 每页一个核心主题
-- 标题明确，正文分层
+- 标题即结论（26pt 粗体）
+- 正文分层（14pt 标准），一级条目粗体
+- 页面标签（20pt 绿色粗体，科唯可风格）
 - 重点突出但不过度装饰
 - 留白充足，文字不贴边
-- 严格对齐
+- 严格对齐，使用模板占位符坐标
 
 ## 禁止事项
 
@@ -1135,7 +1186,7 @@ python scripts/generate.py \
 - 不得把表格做成色块拼贴
 - 不得输出不可编辑的整页图片
 - 不得改变模板的页脚、页码、版权信息
-- 不得随意更改字体体系
+- 不得随意更改字体体系（必须同时设置东亚和拉丁字体）
 - 不得只模仿颜色，忽略字号、行距、母版、参考线
 - 不得生成AI感、海报感、营销长图感的页面
 - **不得编造数据**：未提供的数据使用"[待补充]"占位
@@ -1146,9 +1197,10 @@ python scripts/generate.py \
 
 | 资源 | 路径 | 用途 |
 |------|------|------|
-| 生成脚本 | `scripts/generate.py` | Python+python-pptx，基于模板和JSON生成PPT |
+| 生成脚本 | `scripts/generate.py` | Python+python-pptx，基于模板和JSON生成PPT（16种页面构建器） |
+| 排版引擎 | `scripts/simcere_layout.py` | 排版参数系统（25色、18级字号、段落间距、占位符操作） |
 | 模板文件 | `assets/simcere-template.pptx` | 先声药业2026官方模板，含母版/版式/Logo/主题色 |
-| 模板规格 | `references/template-spec.md` | 品牌视觉规范（颜色/字体/字号/占位符坐标） |
+| 模板规格 | `references/template-spec.md` | 品牌视觉规范（颜色/字体/字号/占位符坐标）v3.0精确版 |
 
 ---
 

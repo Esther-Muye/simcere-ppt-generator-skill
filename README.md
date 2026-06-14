@@ -1,35 +1,41 @@
-# 汇报 PPT 生成器
+# 先声药业 PPT 生成器 v3.0
 
-基于simcere 2026 版官方 PPT 模板，通过 JSON 配置自动生成符合集团统一视觉风格的可编辑 PPT 文件。
+基于先声药业 2026 版官方 PPT 模板，通过 JSON 配置自动生成符合集团统一视觉风格的可编辑 PPT 文件。
+
+> **v3.0 更新**：精确排版引擎（25色 + 18级字号 + 段落间距系统），融合官方模板与3份实战参考PPT风格。
 
 ## 核心功能
 
-### 14 种页面类型
+### 16 种页面类型
 
 | 页面类型 | 说明 | 典型场景 |
 |----------|------|----------|
-| `cover` | 封面页，含标题、副标题、日期、汇报人 | PPT 首页 |
-| `toc` | 目录页，列出章节结构 | 汇报大纲 |
-| `section` | 章节分隔页 | 章节过渡 |
-| `content` | 标准内容页，含标题 + 正文 + 可选表格/图表 | 大多数内容页 |
-| `table` | 独立数据表格页 | 数据对比、进度跟踪 |
-| `chart` | 图表页（柱状图/折线图/饼图/面积图） | 趋势、占比、对比 |
+| `cover` | 封面页（44pt大标题） | PPT 首页 |
+| `toc` | 目录页（18pt条目） | 汇报大纲 |
+| `section` | 章节分隔页（32pt标题） | 章节过渡 |
+| `content` | 标准内容页（26pt标题 + 14pt正文 + 可选表格/图表） | 大多数内容页 |
 | `gantt` | 矩阵式甘特图 | 项目推进节奏、月度计划 |
 | `timeline_horizontal` | 横向卡片式时间线 | Campaign 规划、传播节奏 |
-| `big_number` | 超大字号核心数字 + 说明 + 底部明细卡片 | 活动规模、成本拆解 |
+| `big_number` | 超大字号核心数字 + 说明 + 明细卡片 | 活动规模、成本拆解 |
 | `comparison` | 多组数据并排对比卡片 | 竞品对比、方案对比 |
 | `process` | 水平排列的圆角矩形节点 + 箭头 | 里程碑、上市节奏 |
 | `kpi_dashboard` | 网格排列的指标卡片 | 关键指标总览 |
 | `item_matrix` | 物品矩阵图（场景→对象→物品→成本→评分） | 品牌提示物盘点、资源矩阵 |
 | `calendar_grid` | 日历网格（行=场景，列=月份） | 月度推广排期、资源分配 |
-| `ending` | 结束页 | "谢谢" 尾页 |
+| `review_matrix` | 复盘矩阵（有效动作 × 做的好/不好） | 项目复盘 |
+| `action_category` | 分类复盘（持续做/优化提升/开始做） | 改进计划 |
+| `strategy_diagram` | 策略架构图（中心+维度+支柱） | 策略展示 |
+| `ending` | 结束页（44pt标题） | "谢谢" 尾页 |
 
-### 设计规范
+### 设计规范（v3.0 精确版）
 
-- **主题色**：绿色 `#00B052` 为主色，深绿 `#006647` 为辅助
-- **字体**：中文微软雅黑，英文 Arial
+- **颜色系统**：25色（含主题色6种 + 业务色 + 背景色 + 架构图色）
+- **字体**：中文微软雅黑（`a:ea`）+ 英文 Arial（`a:latin`），同时设置
+- **字号**：18级精确层级（44pt → 32pt → 26pt → 20pt → 16pt → 14pt → ... → 7pt）
+- **段落间距**：标题 0/8pt、正文 6/3pt、紧凑 2/1pt，行距 1.0x/1.3x/1.15x
+- **表格**：真实表格对象 + 先声绿表头(#00B052) + 隔行浅绿(#F0F7F4)
+- **图表**：真实图表对象，accent1→accent6 配色顺序
 - **模板继承**：完整保留母版、版式、Logo、页脚、版权信息
-- **可编辑性**：所有文本框、表格、图表均可直接编辑
 
 ## 快速开始
 
@@ -47,22 +53,26 @@ pip install python-pptx
 ```bash
 python scripts/generate.py \
   --template assets/simcere-template.pptx \
-  --input examples/content-example.json \
-  --output output.pptx
+  --input your_content.json \
+  --output result.pptx
 ```
 
 ## 目录结构
 
 ```
 .
+├── SKILL.md                        # Skill 完整定义（含9大业务模块 + 设计规范）
+├── README.md
 ├── assets/
-│   └── simcere-template.pptx      # 先声药业官方PPT模板
+│   └── simcere-template.pptx      # 先声药业2026官方PPT模板
 ├── scripts/
-│   └── generate.py                # 主生成脚本（Python + python-pptx）
+│   ├── generate.py                # 主生成脚本（Python + python-pptx，16种页面构建器）
+│   └── simcere_layout.py          # 排版引擎（25色 + 18级字号 + 段落间距系统）
 ├── references/
-│   └── template-spec.md           # 模板视觉规范文档
+│   └── template-spec.md           # 精确模板视觉规范（占位符坐标、颜色、字号、间距）
 ├── examples/
-│   └── content-example.json       # 内容JSON示例
+│   ├── content-example.json       # 内容JSON示例（基础版）
+│   └── content-example-v2.json    # 内容JSON示例（14页科唯可复盘完整版）
 └── README.md
 ```
 
@@ -82,7 +92,7 @@ python scripts/generate.py \
     {
       "type": "content",
       "title": "市场现状分析",
-      "subtitle": "2026年上半年零售市场核心数据",
+      "tag": "市场洞察",
       "body": [
         {"text": "市场规模持续增长，但增速放缓", "level": 0},
         {"text": "竞品加速布局县域市场", "level": 0}
@@ -95,42 +105,15 @@ python scripts/generate.py \
       }
     },
     {
-      "type": "gantt",
-      "title": "下半年推进甘特图",
-      "rows": ["宣传", "覆盖", "陈列", "培训", "复购"],
-      "months": ["7月", "8月", "9月", "10月", "11月", "12月"],
-      "data": [
-        {"row": "覆盖", "month": "7月", "text": "方案落地", "highlight": true}
-      ]
-    },
-    {
-      "type": "item_matrix",
-      "title": "品牌提示物使用情况概览",
-      "groups": [
-        {
-          "scene": "品牌活动",
-          "audience": "患者",
-          "cost_tier": "≤10元",
-          "avg_score": "8.5",
-          "items": [
-            {"name": "定制抽纸", "score": "8.5"},
-            {"name": "抽绳背包", "score": "8.5"}
-          ]
-        }
-      ]
-    },
-    {
-      "type": "calendar_grid",
-      "title": "月度推广排期",
+      "type": "review_matrix",
+      "title": "有效动作复盘矩阵",
+      "badge": "复盘",
+      "category_header": "有效动作",
+      "good_header": "做的好（持续做）",
+      "bad_header": "做的不好（优化提升）",
       "rows": [
-        {"name": "品牌活动", "subtitle": "（对象：患者）"}
-      ],
-      "months": ["7月", "8月", "9月", "10月", "11月", "12月"],
-      "grid": [
-        [
-          {"items": ["抽绳背包", "艾草锤"], "highlight": true},
-          {"items": ["定制抽纸"]}
-        ]
+        {"action": "宣传/传播", "good": "321睡眠日整合营销...", "bad": "线上仅135场(6.4%)..."},
+        {"action": "覆盖", "good": "新开发连锁69家...", "bad": "县域仅完成62%..."}
       ]
     },
     {
@@ -144,23 +127,27 @@ python scripts/generate.py \
 
 ## 适用场景
 
-- 市场部汇报
-- 零售业务策略规划
-- 医药连锁项目复盘
-- 产品上市计划
-- 领导汇报材料
+- 市场部汇报（业务复盘、营销计划、品牌策略）
+- 零售业务策略规划（渠道、产品、品牌提示物）
+- 医药连锁项目复盘（五维链路：传播→覆盖→陈列→培训→复购）
+- 产品上市计划（竞品对比、差异化定位、关键里程碑）
+- 数据汇报与洞察（KPI仪表盘、趋势分析、投入产出分析）
+- 组织能力建设（培训体系、能力评估、考核激励）
 
 ## 技术栈
 
-- Python 3
+- Python 3.11+
 - [python-pptx](https://python-pptx.readthedocs.io/)
+- lxml（段落间距 XML 操作）
 
 ## 注意事项
 
-- 模板文件 `simcere-template.pptx` 为 16:9 宽屏尺寸（13.333" x 7.5"）
-- 如用户未提供具体数据，JSON 中可使用 `"待补充"` 占位
-- 所有生成内容均为可编辑对象，非整页截图
+- 模板文件 `simcere-template.pptx` 为 16:9 宽屏尺寸（13.333" × 7.5"）
+- 如用户未提供具体数据，JSON 中可使用 `"[待补充]"` 占位，**绝不编造数据**
+- 所有生成内容均为可编辑对象（文本框、表格、图表），非整页截图
 - 完整保留模板母版、Logo、页脚版权信息
+- 字体通过 `a:ea`（东亚）和 `a:latin`（拉丁）分别设置，确保中英文混排正确
+- 表格为真实 PPT 表格对象，非色块拼贴
 
 ---
 
